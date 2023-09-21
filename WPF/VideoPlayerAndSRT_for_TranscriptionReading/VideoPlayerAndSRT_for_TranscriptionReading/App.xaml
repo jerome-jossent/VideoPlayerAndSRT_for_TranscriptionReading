@@ -1,0 +1,9 @@
+﻿<Application x:Class="VideoPlayerAndSRT_for_TranscriptionReading.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:VideoPlayerAndSRT_for_TranscriptionReading"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>
