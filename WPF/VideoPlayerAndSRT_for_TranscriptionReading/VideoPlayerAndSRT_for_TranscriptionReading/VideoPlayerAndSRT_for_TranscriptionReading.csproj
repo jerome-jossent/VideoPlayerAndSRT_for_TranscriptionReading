@@ -5,11 +5,39 @@
     <TargetFramework>net7.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>video.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\curseur_on.png" />
+    <None Remove="Resources\folder.png" />
+    <None Remove="Resources\Lecture.png" />
+    <None Remove="Resources\Pause.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="video.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="4.5.1" />
     <PackageReference Include="Vlc.DotNet.Core" Version="3.1.0" />
     <PackageReference Include="Vlc.DotNet.Wpf" Version="3.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\curseur_on.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\folder.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Lecture.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\Pause.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
 </Project>

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -34,6 +35,7 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
             get
             {
                 if (vlcPlayer.SourceProvider.MediaPlayer == null) return 0;
+                OnPropertyChanged("time_string");
                 return (double)vlcPlayer.SourceProvider.MediaPlayer.Time / vlcPlayer.SourceProvider.MediaPlayer.Length;
             }
             set
@@ -42,15 +44,37 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
                 OnPropertyChanged();
             }
         }
+        public string time_string
+        {
+            get
+            {
+                if (vlcPlayer.SourceProvider.MediaPlayer == null) return "-";
+
+                return TimeSpan.FromMilliseconds(vlcPlayer.SourceProvider.MediaPlayer.Time).ToString("mm':'ss'.'fff");
+
+            }
+        }
+
+        public string total_time_string
+        {
+            get
+            {
+                if (vlcPlayer.SourceProvider.MediaPlayer == null) return "-";
+                return TimeSpan.FromMilliseconds(vlcPlayer.SourceProvider.MediaPlayer.Length).ToString("mm':'ss'.'fff");
+            }
+        }
 
         DirectoryInfo vlcLibDirectory;
 
-        List<long> srt_time;
+        List<long> srt_time_start;
+        List<long> srt_time_end;
 
+        Dictionary<long, Subs_UC> sub_time_start;
+        Dictionary<long, Subs_UC> sub_time_end;
 
-        int srt_current_index;
-        long srt_current_time;
-        long srt_next_time;
+        long valEnable_prev = -1;
+        long valDisable_prev = -1;
+
         DispatcherTimer timer;
 
         public MainWindow()
@@ -76,66 +100,124 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
             //Trouver le sous titre correspondant
             if (vlcPlayer.SourceProvider.MediaPlayer == null) return;
 
-            if (vlcPlayer.SourceProvider.MediaPlayer.Time > srt_next_time)
+            long valEnable = GetPassedSRTTime(vlcPlayer.SourceProvider.MediaPlayer.Time, srt_time_start);
+            long valDisable = GetPassedSRTTime(vlcPlayer.SourceProvider.MediaPlayer.Time, srt_time_end);
+
+            if (valEnable_prev != valEnable)
             {
-                UnSelectSRT(srt_current_index);
-                srt_current_index++;
-                SelectSRT(srt_current_index);
-                srt_next_time = srt_time[srt_current_index];
+                valEnable_prev = valEnable;
+                if (valEnable != -1)
+                {
+                    Subs_UC._InactiveAll();
+                    sub_time_start[valEnable]._SetActive();
+                    //focus
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        lv_srt.ScrollIntoView(sub_time_start[valEnable]);
+                    });
+                }
+            }
+
+            if (valDisable_prev != valDisable)
+            {
+                valDisable_prev = valDisable;
+                if (valDisable != -1)
+                    sub_time_end[valDisable]._Deactive();
             }
         }
 
-        private void SelectSRT(int srt_current_index)
+        private long GetPassedSRTTime(long time, List<long> srt_time)
         {
-            Dispatcher.BeginInvoke(() =>
+            long t = srt_time[0];
+            for (int i = 0; i < srt_time.Count; i++)
             {
-                lv_srt.SelectedIndex = srt_current_index;
-            });
+                t = srt_time[i];
+                if (t > time)
+                    if (i > 0)
+                        return srt_time[i - 1];
+                    else
+                        return srt_time[0];
+            }
+            return -1;
         }
 
-        private void UnSelectSRT(int srt_current_index)
+        private void LoadVideo_Click(object sender, MouseButtonEventArgs e)
         {
-            Dispatcher.BeginInvoke(() =>
-            {
-                lv_srt.SelectedIndex = -1;
-            });
+            OpenVideoAndSRTFiles();
         }
 
-        void LoadVideo_Click(object sender, RoutedEventArgs e)
+        void OpenVideoAndSRTFiles()
         {
             var openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Fichiers vidéo (*.mp4, *.avi)|*.mp4;*.avi|Tous les fichiers (*.*)|*.*";
 
             if (openFileDialog.ShowDialog() == true)
             {
-                string[] options = new string[] { };
-                //var options = new string[] { $"sub-file=Python 2023-09-18 09-28-53 - bases (Transcribed on 21-Sep-2023 17-38-40).srt" };
-
                 FileInfo fi = new FileInfo(openFileDialog.FileName);
-                FileInfo? fi_srt = FindSRT(fi);
-                if (fi_srt != null)
+                OpenVideoAndSRTFiles(fi);
+            }
+        }
+
+        void OpenVideoAndSRTFiles(FileInfo fi)
+        {
+            string[] options = new string[] { };
+            //var options = new string[] { $"sub-file=fichier.srt" };
+            FileInfo? fi_srt = FindSRT(fi);
+            if (fi_srt != null)
+            {
+                options.Append("sub-file=" + fi_srt.Name);
+            }
+
+            // VLC options can be given here. Please refer to the VLC command line documentation.
+            vlcPlayer.SourceProvider.CreatePlayer(vlcLibDirectory, options);
+
+            vlcPlayer.SourceProvider.MediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
+            vlcPlayer.SourceProvider.MediaPlayer.EndReached += MediaPlayer_EndReached;
+            vlcPlayer.SourceProvider.MediaPlayer.Opening += MediaPlayer_Opening;
+
+            vlcPlayer.SourceProvider.MediaPlayer.Play(fi);
+
+            LoadSRTFile(fi_srt);
+        }
+
+        void LoadSRTFile(FileInfo? fi_srt)
+        {
+            if (fi_srt != null)
+            {
+                lv_srt.Items.Clear();
+
+                SRTFile srt = new SRTFile(fi_srt.FullName);
+                srt_time_start = new List<long>();
+                srt_time_end = new List<long>();
+
+                sub_time_start = new Dictionary<long, Subs_UC>();
+                sub_time_end = new Dictionary<long, Subs_UC>();
+
+                foreach (Subtitle sub in srt.Subtitles)
                 {
-                    options.Append("sub-file=" + ((FileInfo)fi_srt).Name);
-                }
+                    Subs_UC sub_UC = new Subs_UC();
+                    sub_UC._Link(this, sub);
+                    lv_srt.Items.Add(sub_UC);
 
-                // VLC options can be given here. Please refer to the VLC command line documentation.
-                vlcPlayer.SourceProvider.CreatePlayer(vlcLibDirectory, options);
+                    long val = sub.StartTime.TotalMilliseconds;
+                    srt_time_start.Add(val);
+                    if (!sub_time_start.ContainsKey(val))
+                        sub_time_start.Add(val, sub_UC);
 
-                vlcPlayer.SourceProvider.MediaPlayer.TimeChanged += MediaPlayer_TimeChanged;
-                vlcPlayer.SourceProvider.MediaPlayer.Play(fi);
-
-                if (fi_srt != null)
-                {
-                    SRTFile srt = new SRTFile(fi_srt.FullName);
-                    srt_time = new List<long>();
-                    foreach (Subtitle sub in srt.Subtitles)
-                    {
-                        lv_srt.Items.Add(string.Join("\n", sub.Lines));
-                        srt_time.Add(sub.EndTime.TotalMilliseconds);
-                    }
-                    srt_next_time = srt_time[0];
+                    val = sub.EndTime.TotalMilliseconds;
+                    srt_time_end.Add(val);
+                    if (!sub_time_end.ContainsKey(val))
+                        sub_time_end.Add(sub.EndTime.TotalMilliseconds, sub_UC);
                 }
             }
+        }
+
+        private void MediaPlayer_Opening(object? sender, Vlc.DotNet.Core.VlcMediaPlayerOpeningEventArgs e)
+        {
+            OnPropertyChanged("total_time_string");
+            cts = new CancellationTokenSource();
+            Task.Run(() => CheckIfVideoEnded());
+            SetButtonPause();
         }
 
         FileInfo? FindSRT(FileInfo fi)
@@ -150,6 +232,84 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
         private void MediaPlayer_TimeChanged(object? sender, Vlc.DotNet.Core.VlcMediaPlayerTimeChangedEventArgs e)
         {
             OnPropertyChanged("player_val");
+        }
+
+        private void MediaPlayer_EndReached(object? sender, Vlc.DotNet.Core.VlcMediaPlayerEndReachedEventArgs e)
+        {
+            SetButtonPlay();
+            timer.Stop();
+            VideoEndedFlag = true;
+        }
+
+        CancellationTokenSource cts;
+        bool VideoEndedFlag = false;
+        //gestion de l'erreur entre l'évènement VLC_EndReached et l'appel direct à Stop() 
+        private async void CheckIfVideoEnded()
+        {
+            try
+            {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    if (VideoEndedFlag)
+                    {
+                        vlcPlayer.SourceProvider.MediaPlayer.Stop();
+                        OnPropertyChanged("player_val");
+                        VideoEndedFlag = false;
+
+                    }
+                    // Check every second
+                    await Task.Delay(1000, cts.Token);
+                }
+            }
+            catch (Exception)
+            {
+                // Do nothing
+            }
+        }
+
+        void SetButtonPlay() { SetButtonVisible(true); }
+        void SetButtonPause() { SetButtonVisible(false); }
+
+        void SetButtonVisible(bool visible) { Dispatcher.BeginInvoke(() => { btn_play_pause.Visibility = visible ? Visibility.Hidden : Visibility.Visible; }); }
+
+
+        internal void _SubsGoTo(Subtitle sub)
+        {
+            vlcPlayer.SourceProvider.MediaPlayer.Time = sub.StartTime.TotalMilliseconds;
+        }
+
+        private void btn_play_pause_Click(object sender, MouseButtonEventArgs e)
+        {
+            if (vlcPlayer.SourceProvider.MediaPlayer.IsPlaying())
+            {
+                //on veut faire pause
+                vlcPlayer.SourceProvider.MediaPlayer.Pause();
+                SetButtonPlay();
+            }
+            else
+            {
+                //on veut faire play
+                vlcPlayer.SourceProvider.MediaPlayer.Play();
+                SetButtonPause();
+            }
+        }
+
+
+
+        private void vlc_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left && e.ClickCount == 2)
+            {
+                if (this.WindowState == WindowState.Maximized)
+                    this.WindowState = WindowState.Normal;
+                else
+                    this.WindowState = WindowState.Maximized;
+            }
+        }
+
+        private void Sub_edit_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }
