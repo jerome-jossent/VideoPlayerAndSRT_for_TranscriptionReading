@@ -158,11 +158,12 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
             }
         }
 
-        void OpenVideoAndSRTFiles(FileInfo fi)
+        void OpenVideoAndSRTFiles(FileInfo fi, FileInfo? fi_srt = null)
         {
             string[] options = new string[] { };
             //var options = new string[] { $"sub-file=fichier.srt" };
-            FileInfo? fi_srt = FindSRT(fi);
+            if (fi_srt == null)
+                fi_srt = FindSRT(fi);
             if (fi_srt != null)
             {
                 options.Append("sub-file=" + fi_srt.Name);
@@ -295,7 +296,6 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
         }
 
 
-
         private void vlc_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left && e.ClickCount == 2)
@@ -310,6 +310,25 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
         private void Sub_edit_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void Window_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+                FileInfo fi_0 = new FileInfo(files[0]);
+                FileInfo fi_1 = null;
+                if (files.Length > 1)
+                    fi_1 = new FileInfo(files[1]);
+
+                if (fi_0.Extension.ToLower() == ".srt")
+                    OpenVideoAndSRTFiles(fi_1, fi_0);
+                else
+                    OpenVideoAndSRTFiles(fi_0, fi_1);
+
+            }
         }
     }
 }

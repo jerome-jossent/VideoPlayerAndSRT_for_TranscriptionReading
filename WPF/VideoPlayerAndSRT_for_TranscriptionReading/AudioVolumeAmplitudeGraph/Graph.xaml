@@ -1,0 +1,26 @@
+<UserControl
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:AudioVolumeAmplitudeGraph"
+             xmlns:PanAndZoom="clr-namespace:PanAndZoom" x:Class="AudioVolumeAmplitudeGraph.Graph"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="200"
+    Loaded="UserControl_Loaded"
+    
+    >
+
+    <Grid SizeChanged="GridZoom_V_SizeChanged" >
+        <PanAndZoom:ZoomBorder x:Name="zoomBorder_V" Background="Gray"
+                               X_fixed="True" Y_fixed="False" ClipToBounds="True">
+            
+            <Viewbox Stretch="Fill" ClipToBounds="True" x:Name="rectangles_viewbox_V">
+                
+                <Canvas x:Name="rectangles_V" ClipToBounds="True" Height="1" Width="1"/>
+                
+            </Viewbox>
+            
+        </PanAndZoom:ZoomBorder>
+    </Grid>
+</UserControl>

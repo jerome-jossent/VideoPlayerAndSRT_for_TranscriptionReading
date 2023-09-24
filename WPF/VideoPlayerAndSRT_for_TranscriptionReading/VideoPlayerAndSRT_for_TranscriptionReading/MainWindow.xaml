@@ -10,7 +10,10 @@
                  xmlns:xcad="http://schemas.xceed.com/wpf/xaml/avalondock"
         
         mc:Ignorable="d"
-        Title="Video Player with SRT" Height="450" Width="1600">
+        Title="Video Player with SRT" Height="450" Width="1600"
+        DragDrop.Drop="Window_Drop"
+        AllowDrop="True"
+        >
 
     <Window.Resources>
         <Style x:Key="SliderThumb" TargetType="Thumb">
