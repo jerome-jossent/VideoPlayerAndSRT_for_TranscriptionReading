@@ -12,11 +12,8 @@ namespace AudioVolumeAmplitudeGraph
 {
     public class VolumeAnalysis
     {
-
-
         public string filename;
         public DATA data;
-
 
         double _silence_detection_sensitivity;
         double _silence_detection_mintime;
@@ -85,9 +82,9 @@ namespace AudioVolumeAmplitudeGraph
                 silences.RemoveAt(silences.Count - 1);
             }
 
-            List_Titles();
-            List_Silences();
-            ReDrawGraph();
+            //List_Titles();
+            //List_Silences();
+            //ReDrawGraph();
         }
 
 

@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Shapes;
+
 
 //https://github.com/iivmok/srtlib.net/blob/master/srtlib.net.cs
 
@@ -13,6 +15,8 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
     public class SRTFile
     {
         private static Regex rxHTML = new Regex(@"<(.|\n)*?>", RegexOptions.Compiled);
+
+        string pathSRT;
 
         /// <summary>
         /// List of all subtitles in the file.
@@ -29,7 +33,7 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
                 TimeSpan time = TimeSpan.Zero;
                 foreach (var item in Subtitles)
                 {
-                    if (item.EndTime > time) time = item.EndTime;
+                    if (item.endTime > time) time = item.endTime;
                 }
                 return time;
             }
@@ -45,7 +49,7 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
             List<Subtitle> result = new List<Subtitle>();
             foreach (var item in Subtitles)
             {
-                if (time > item.StartTime && time < item.EndTime)
+                if (time > item.startTime && time < item.endTime)
                 {
                     result.Add(item);
                 }
@@ -61,11 +65,13 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
         /// <param name="stripHTMLTags">Strip HTML tags from the subtitles. Default is false.</param>
         public SRTFile(string pathSRT, Encoding enc = null, bool stripHTMLTags = false)
         {
-            if (enc == null)
-                enc = Encoding.UTF8;
-
             if (pathSRT == null)
                 throw new ArgumentNullException("pathSRT");
+
+            if (enc == null)
+                enc = Encoding.UTF8;
+         
+            this.pathSRT = pathSRT;
 
             string[] lines = Regex.Replace(File.ReadAllText(pathSRT), "\r\n?", "\n").Split('\n');
 
@@ -107,9 +113,9 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
                             if (lines[i] != "")
                             {
                                 if (stripHTMLTags)
-                                    currentSubtitle.Lines.Add(StripHTML(lines[i]));
+                                    currentSubtitle.Lines_Add(StripHTML(lines[i]));
                                 else
-                                    currentSubtitle.Lines.Add(lines[i]);
+                                    currentSubtitle.Lines_Add(lines[i]);
                             }
                             else
                             {
@@ -123,10 +129,11 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
             }
             catch (Exception ex)
             {
+                System.Windows.MessageBox.Show(ex.ToString() + string.Format("\r\n\r\nError line: {0}", error_line));
                 throw new Exception("Invalid SRT file.", ex);
-                //MessageBox.Show(ex.ToString() + string.Format("\r\n\r\nError line: {0}", error_line));
             }
         }
+
         private static string StripHTML(string htmlString)
         {
             return rxHTML.Replace(htmlString, string.Empty);
@@ -140,10 +147,8 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
         {
             StringBuilder sb = new StringBuilder();
 
-            for (int i = 0; i < Subtitles.Count; i++)
-            {
-                sb.Append(Subtitles[i].ToString());
-            }
+            for (int i = 0; i < Subtitles.Count; i++)            
+                sb.Append(Subtitles[i].ToString());            
 
             return sb.ToString();
         }
@@ -156,6 +161,10 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
             File.WriteAllText(path, Render());
         }
 
+        internal void Save()
+        {
+            WriteToFile(pathSRT);
+        }
 
         /// <summary>
         /// Multiply the times of this object, for example to convert to other FPS.
@@ -182,9 +191,10 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
 
     public class Subtitle
     {
-        public int SequenceNumber;
-        public SRTTime StartTime, EndTime;
-        public List<string> Lines = new List<string>();
+        public int sequenceNumber;
+        public SRTTime startTime, endTime;
+        public List<string> lines = new List<string>();
+        public List<string> linesEdition = new List<string>();
 
         /// <summary>
         /// Gets or sets the text of the subtitle
@@ -193,24 +203,24 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
         {
             get
             {
-                return string.Join(Environment.NewLine, Lines.ToArray());
+                return string.Join(Environment.NewLine, lines.ToArray()).Trim();
             }
             set
             {
-                Lines.Clear();
-                Lines.AddRange(value.Split(new string[] { "\r\n" }, StringSplitOptions.None));
+                lines.Clear();
+                lines.AddRange(value.Split(new string[] { "\r\n" }, StringSplitOptions.None));
             }
         }
 
         public Subtitle(int seqNum)
         {
-            SequenceNumber = seqNum;
+            sequenceNumber = seqNum;
         }
         public void ParseTime(string line)
         {
             int markerindex = line.IndexOf(" --> ");
-            StartTime = new SRTTime(line.Substring(0, markerindex));
-            EndTime = new SRTTime(line.Substring(markerindex + 5, line.Length - markerindex - 5));
+            startTime = new SRTTime(line.Substring(0, markerindex));
+            endTime = new SRTTime(line.Substring(markerindex + 5, line.Length - markerindex - 5));
         }
 
         /// <summary>
@@ -218,8 +228,8 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
         /// </summary>
         public void Multiply(double factor)
         {
-            StartTime.Multiply(factor);
-            EndTime.Multiply(factor);
+            startTime.Multiply(factor);
+            endTime.Multiply(factor);
         }
 
         /// <summary>
@@ -227,8 +237,8 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
         /// </summary>
         public void Add(int ms)
         {
-            StartTime.Add(ms);
-            EndTime.Add(ms);
+            startTime.Add(ms);
+            endTime.Add(ms);
         }
 
         /// <summary>
@@ -238,9 +248,9 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
         public string Render()
         {
             return string.Format("{0}\r\n{1} --> {2}\r\n{3}\r\n\r\n",
-                SequenceNumber,
-                StartTime,
-                EndTime,
+                sequenceNumber,
+                startTime,
+                endTime,
                 Text);
         }
 
@@ -249,6 +259,13 @@ namespace VideoPlayerAndSRT_for_TranscriptionReading
             return Render();
         }
 
+        internal void Lines_Add(string v)
+        {
+            if (lines == null)
+                lines = new List<string>();
+
+            lines.Add(v);
+        }
     }
 
     public class SRTTime

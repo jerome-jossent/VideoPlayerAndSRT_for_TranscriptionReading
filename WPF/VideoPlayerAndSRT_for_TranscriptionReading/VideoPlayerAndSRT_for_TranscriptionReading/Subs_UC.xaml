@@ -6,7 +6,8 @@
              xmlns:local="clr-namespace:VideoPlayerAndSRT_for_TranscriptionReading"
              mc:Ignorable="d" 
              d:DesignHeight="50" d:DesignWidth="400"
-             Height="auto" MaxWidth="700" >
+             Height="auto">
+    
     <Grid MinHeight="18" MouseDown="Grid_MouseDown">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="auto"/>
@@ -18,6 +19,37 @@
         <TextBlock Grid.Column="0" VerticalAlignment="Top" Height="18" Text="00:00:00.000" x:Name="_tbk_tps_start" Foreground="DarkGray" />
         <TextBlock Grid.Column="1" VerticalAlignment="Top" Margin="5,0" Height="18" Text="-"  Foreground="Black" />
         <TextBlock Grid.Column="2" VerticalAlignment="Top" Height="18" Text="00:00:00.000" x:Name="_tbk_tps_end" Foreground="DarkGray"/>
-        <TextBlock Grid.Column="3" VerticalAlignment="Top" Margin="5,0,0,0" Text="texte très très très très très très très très très très très très très très très très très très très très très très très très très très long" x:Name="_tbk" TextWrapping="Wrap"/>
+        
+        <Grid Grid.Column="3" x:Name="grd_Editor" Visibility="Visible">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Image Grid.Column="0" Width="20" Height="20" VerticalAlignment="Top" MouseDown="Check_MouseDown" 
+                   Source="/Resources/19770-bubka-Check.png" RenderOptions.BitmapScalingMode="Fant"/>
+
+            <TextBox Grid.Column="1" Margin="2,-1,0,0"                     
+                   Text="{Binding _sub_txt, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                   x:Name="_tbx" TextWrapping="Wrap">
+
+
+                <TextBox.Style>
+                    <Style TargetType="TextBox">
+                        <Style.Triggers>
+                            <Trigger Property="Focusable" Value="false">
+                                <Setter Property="ContextMenu.Visibility" Value="Hidden" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Style>
+
+            </TextBox>
+
+        </Grid>
+        
+        <TextBlock Grid.Column="3" VerticalAlignment="Top" Margin="5,0,0,0" 
+                   Text="{Binding _sub_txt, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" 
+                   x:Name="_tbk" MouseDown="_tbk_MouseDown"
+                   TextWrapping="Wrap"/>
     </Grid>
 </UserControl>

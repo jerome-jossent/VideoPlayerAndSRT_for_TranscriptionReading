@@ -12,8 +12,7 @@
         mc:Ignorable="d"
         Title="Video Player with SRT" Height="450" Width="1600"
         DragDrop.Drop="Window_Drop"
-        AllowDrop="True"
-        >
+        AllowDrop="True">
 
     <Window.Resources>
         <Style x:Key="SliderThumb" TargetType="Thumb">
@@ -98,8 +97,9 @@
                                         <Slider Grid.Column="1" Value="{Binding player_val, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" VerticalAlignment="Center"
                     Minimum="0" Maximum="1" LargeChange="0.1" SmallChange="0.01" Style="{StaticResource Horizontal_Slider}"/>
 
-                                        <StackPanel Grid.Column="2">
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal">
                                             <Label Content="{Binding time_string, UpdateSourceTrigger=PropertyChanged}" MinWidth="50" HorizontalContentAlignment="Center" VerticalAlignment="Center"/>
+                                            <Label Content="/" VerticalAlignment="Center" HorizontalContentAlignment="Center"/>
                                             <Label Content="{Binding total_time_string, UpdateSourceTrigger=PropertyChanged}" MinWidth="50" HorizontalContentAlignment="Center" VerticalAlignment="Center"/>
                                         </StackPanel>
 
@@ -125,17 +125,22 @@
                     <xcad:LayoutAnchorablePaneGroup>
                         <xcad:LayoutAnchorablePane>
                             <xcad:LayoutAnchorable ContentId="SRT" Title=""
-                                                   CanHide="False" CanClose="False" CanFloat="False" 
+                                                   CanHide="False" CanClose="False" CanFloat="True" 
                                                    CanAutoHide="False" CanDockAsTabbedDocument="False">
-                                <Grid>
-
-                                    <ListView x:Name="lv_srt" Margin="0,-20, 0, 0">
-                                        <ListView.ContextMenu>
-                                            <ContextMenu>
-                                                <MenuItem Header="Edit" Click="Sub_edit_Click" CommandParameter="{Binding}"/>
-                                            </ContextMenu>
-                                        </ListView.ContextMenu>
-                                    </ListView>
+                                <Grid Margin="0,-20,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <StackPanel Orientation="Horizontal" FlowDirection="RightToLeft">
+                                        <Image Height="30" MouseDown="btn_refresh_Click"
+                                                Source="/Resources/refresh.png" RenderOptions.BitmapScalingMode="Fant" />
+                                    </StackPanel>
+                                    
+                                    <ListView Grid.Row="1" x:Name="lv_srt" SelectionMode="Single"
+                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                              />
                                 </Grid>
 
                             </xcad:LayoutAnchorable>

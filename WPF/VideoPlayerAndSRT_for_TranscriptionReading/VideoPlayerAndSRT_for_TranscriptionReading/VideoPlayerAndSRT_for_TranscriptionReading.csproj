@@ -9,10 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\19770-bubka-Check.png" />
+    <None Remove="Resources\19775-bubka-Delete.png" />
     <None Remove="Resources\curseur_on.png" />
     <None Remove="Resources\folder.png" />
     <None Remove="Resources\Lecture.png" />
     <None Remove="Resources\Pause.png" />
+    <None Remove="Resources\refresh.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +29,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Resources\19770-bubka-Check.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\19775-bubka-Delete.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Resources\curseur_on.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
@@ -36,6 +45,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Resources\Pause.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Resources\refresh.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>
